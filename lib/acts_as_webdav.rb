@@ -151,7 +151,7 @@ module Railsdav
 
         def webdav_lock
           resource = find_resource_by_path(@path_info)
-          raise NotFoundError unless resource
+          #raise NotFoundError unless resource
 
           locktype = "read"
           lockscope = "exclusive"
@@ -162,7 +162,8 @@ module Railsdav
             owner = User.current.login
           end
 
-          newlock=UUID.create.guid
+          #newlock=UUID.create.guid
+	  newlock=UUID.generate
           s = out_of_date
           if !@lock.nil? and not s
             if @lock[:owner] == User.current.login
@@ -173,7 +174,7 @@ module Railsdav
             end
           end
 
-          mylock=Lock.create ( :uid=>newlock, :locktype=>locktype, :lockscope=>lockscope, :owner=>User.current.login,
+          mylock=Lock.create( :uid=>newlock, :locktype=>locktype, :lockscope=>lockscope, :owner=>User.current.login,
           :resource => request.url, :timestamp=> Time.now )
 
           xml = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
