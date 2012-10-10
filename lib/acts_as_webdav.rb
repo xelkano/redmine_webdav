@@ -162,7 +162,9 @@ module Railsdav
             owner = User.current.login
           end
 
-          newlock=UUID.create.guid
+          #newlock=UUID.create.guid
+	  newlock=UUID.new.generate
+	  Rails.logger.debug "DEBUG: uuid generated: " + newlock.inspect
           s = out_of_date
           if !@lock.nil? and not s
             if @lock[:owner] == User.current.login
@@ -173,7 +175,7 @@ module Railsdav
             end
           end
 
-          mylock=Lock.create ( :uid=>newlock, :locktype=>locktype, :lockscope=>lockscope, :owner=>User.current.login,
+          mylock=Lock.create( :uid=>newlock, :locktype=>locktype, :lockscope=>lockscope, :owner=>User.current.login,
           :resource => request.url, :timestamp=> Time.now )
 
           xml = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"

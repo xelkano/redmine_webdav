@@ -43,11 +43,14 @@ module WebDavAttachmentPatch
           end
           self.filesize = @temp_file.size
         end
-      end
+	Rails.logger.debug "DEBUG: incomming_file: " + incomming_file.inspect
+	Rails.logger.debug "DEBUG self: " + self.inspect
+      end 
     end
 
     #no change except @temp_file.size >= 0 and remove logger call
     def files_to_final_location_with_webdav
+      Rails.logger.debug "DEBUG: files_to_final_location_with_webdav INI"
       if @temp_file && (@temp_file.size >= 0)
         md5 = Digest::MD5.new
         File.open(diskfile, "wb") do |f| 
