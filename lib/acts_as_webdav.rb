@@ -151,7 +151,7 @@ module Railsdav
 
         def webdav_lock
           resource = find_resource_by_path(@path_info)
-          raise NotFoundError unless resource
+          #raise NotFoundError unless resource
 
           locktype = "read"
           lockscope = "exclusive"
