@@ -43,7 +43,6 @@ module WebDavAttachmentPatch
           end
           self.filesize = @temp_file.size
         end
-	Rails.logger.debug "DEBUG: incomming_file: " + incomming_file.inspect
 	Rails.logger.debug "DEBUG self: " + self.inspect
       end 
     end

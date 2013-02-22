@@ -422,6 +422,7 @@ module Railsdav
 
     def self.write_content_to_path(project, path, content)
       #Create a file
+      Rails.logger.debug "DEBUG: creating file #{path.inspect}"
       pinfo = path.split("/")
       setting = WebdavSetting.find_or_create project.id
       if (pinfo[0] == setting.subversion_label || setting.subversion_only)
@@ -445,44 +446,54 @@ module Railsdav
           repository.scm.webdav_upload(repository, self.scm_path(project, path[(svnpath.length)..-1]), content, comments, nil)
         end
       else
+  	Rails.logger.debug "DEBUG: pinfo length: #{pinfo.length.inspect}"
         case pinfo.length
         when 2
           if pinfo[0] == setting.files_label
             container = project
             file = project.attachments.find(:first, :conditions => [ "filename = ?", pinfo[1] ])
           end
+	   if pinfo[0] == setting.documents_label
+	    Rails.logger.debug "DEBUG: Traying to create attachment in root, not supported"
+          end
         when 3
           if pinfo[0] == setting.files_label
             container = project.versions.find_by_name(pinfo[1])
             file = container.attachments.find(:first, :conditions => [ "filename = ?", pinfo[2] ])
           end
-          if pinfo[0] == setting.documents_label
+	  if pinfo[0] == setting.documents_label
             container = project.documents.find_by_title(pinfo[1])
             file = container.attachments.find(:first, :conditions => [ "filename = ?", pinfo[2] ])
           end
         end
+        Rails.logger.debug "DEBUG: container: #{container.inspect}"
 
         if container
+  	  Rails.logger.debug "DEBUG: container exist"
           if file
             container.attachments.delete(file)
           end
           
-          tmpfile = Tempfile.new(pinfo.last)
-          tmpfile.binmode
-          tmpfile.write(content)
-          tmpfile.rewind
-          uploaded_file = ActionDispatch::Http::UploadedFile.new({:filename => pinfo.last, :tempfile => tmpfile})
-          
-          a = Attachment.create(:container => container,
-          :webdavfile => uploaded_file,
-          :description => "",
-          :author => User.current)
-          if a.new_record?
-            #a.save
-            raise InsufficientStorageError
+	  begin
+            tmpfile = Tempfile.new(pinfo.last)
+            tmpfile.binmode
+            tmpfile.write(content)
+            tmpfile.rewind
+            uploaded_file = ActionDispatch::Http::UploadedFile.new({:filename => pinfo.last, :tempfile => tmpfile})
+            a = Attachment.create(:container => container,
+              :webdavfile => uploaded_file,
+              :description => "",
+              :author => User.current)
+            if a.new_record?
+              #a.save
+              raise InsufficientStorageError
+   
+            end
+            tmpfile.close!
+            Mailer.deliver_attachments_added([ a ])
+            rescue Exception => e 
+ 	      Rails.logger.debug "DEBUG: error creating attach #{e.inspect}"
           end
-          tmpfile.close!
-          Mailer.deliver_attachments_added([ a ])
         end
       end
     end
